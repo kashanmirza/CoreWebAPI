@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoreWebAPI.ViewModel;
 
 namespace CoreWebAPI.Models
 {
@@ -27,5 +28,10 @@ namespace CoreWebAPI.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string IntialName { get; set; }
+
+        public static implicit operator SecUsers(List<vmUser> v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

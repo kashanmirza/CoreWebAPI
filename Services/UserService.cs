@@ -1,6 +1,7 @@
 ﻿using CoreWebAPI.Helpers;
 using CoreWebAPI.Models;
 using CoreWebAPI.ViewModel;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -20,6 +21,19 @@ namespace CoreWebAPI.Services
         IEnumerable<vmUser> GetAll();
 
         List<SecPermissions> GetAllPermissions();
+
+        #region Added By Kashan
+        Task<List<vmUser>> GetUsers(vmUser criteria);
+
+        Task<vmUser> GetUser(int? Id);
+
+        Task<int> CreateUser(SecUsers user);
+
+        Task<int> DeleteUser(int? userId);
+
+        Task UpdateUser(SecUsers user);
+
+        #endregion
     }
 
     public class UserService : IUserService
@@ -28,11 +42,6 @@ namespace CoreWebAPI.Services
 
         // users hardcoded for simplicity, store in a db with hashed passwords in production applications
         private List<vmUser> _users = new List<vmUser>();
-        //{
-        //    new vmUser { Id = 1, FirstName = "Test", LastName = "User", UserName = "test", Password = "test" ,IntialName ="TT" ,permissions = permissionsList() , RoleName="Admin"  }
-        //    ,new vmUser { Id = 2, FirstName = "Yasir", LastName = "User", UserName = "yasir", Password = "yasir",IntialName ="YR",permissions = permissionsList() , RoleName="Admin"}
-        //    ,new vmUser { Id = 3, FirstName = "Nasir", LastName = "User", UserName = "nasir", Password = "nasir",IntialName ="NR",permissions = permissionsListMemployee(), RoleName="Employee" }
-        //};
 
         public static List<SecPermissions> permissionsList()
         {
@@ -76,25 +85,6 @@ namespace CoreWebAPI.Services
 
             var Token = new JwtSecurityTokenHandler().WriteToken(_token);
 
-            //return OK(Token);
-
-            // JWT END
-
-
-            // authentication successful so generate jwt token
-            //var tokenHandler = new JwtSecurityTokenHandler();
-            //var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-            //var tokenDescriptor = new SecurityTokenDescriptor
-            //{
-            //    Subject = new ClaimsIdentity(new Claim[]
-            //    {
-            //        new Claim(ClaimTypes.Name, user.UserName.ToString())
-            //    }),
-            //    Expires = DateTime.UtcNow.AddMinutes(5),
-            //    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            //};
-            //var token = tokenHandler.CreateToken(tokenDescriptor);
-
             user.Token = Token; // tokenHandler.WriteToken(token);
             user.TokenExpireOn = DateTime.UtcNow.AddMinutes(1);
             user.Password = null;
@@ -126,7 +116,139 @@ namespace CoreWebAPI.Services
         }
 
 
+        #region Added by kashan
+
+
+        public async Task<List<vmUser>> GetUsers(vmUser criteria)
+        {
+            if (db != null)
+            {
+                try
+                {
+                    return await (from p in db.SecUsers
+                                  where p.UserName == criteria.UserName
+
+                                  select new vmUser
+                                  {
+                                      Id = p.SecUserId,
+                                      UserName = p.UserName,
+                                      FirstName = p.FirstName,
+                                      LastName = p.LastName,
+                                      PhoneNumber = p.PhoneNumber,
+                                      Email = p.Email
+                                  }).ToListAsync();
+
+                  
+
+                }
+                catch (Exception ex) {
+
+                    Console.WriteLine("Some Error Acquired" + ex.StackTrace);
+                }
+               
+            }
+
+            return null;
+        }
+
+        public async Task<vmUser> GetUser(int? Id)
+        {
+            if (db != null)
+            {
+                return await (from p in db.SecUsers
+                              where p.SecUserId == Id
+                              select new vmUser
+                              {
+                                  Id = p.SecUserId,
+                                  UserName = p.UserName,
+                                  FirstName = p.FirstName,
+                                  LastName = p.LastName,
+                                  Email = p.Email,
+                                  Password = p.Password,
+                                  PhoneNumber = p.PhoneNumber
+
+                              }).FirstOrDefaultAsync();
+            }
+
+            return null;
+        }
+
+        public async Task<int> CreateUser(SecUsers users)
+        {
+
+            try
+            {
+                if (db != null)
+                {
+                    await db.SecUsers.AddAsync(users);
+                    int id = await db.SaveChangesAsync();
+                    return id;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.StackTrace);
+             
+            }
+            return 0;
+        }
+
+        public async Task<int> DeleteUser(int? userId)
+        {
+            int result = 0;
+
+            if (db != null)
+            {
+                //Find the post for specific post id
+                var user = await db.SecUsers.FirstOrDefaultAsync(x => x.SecUserId == userId);
+
+                if (user != null)
+                {
+                    //Delete that post
+                    db.SecUsers.Remove(user);
+
+                    //Commit the transaction
+                    result = await db.SaveChangesAsync();
+                }
+                return result;
+            }
+
+            return result;
+        }
+
+        public async Task UpdateUser(SecUsers user)
+        {
+            if (db != null)
+            {
+                try
+                {
+                    SecUsers record = await db.SecUsers.FirstOrDefaultAsync(x => x.SecUserId == user.SecUserId);
+                    if (record != null)
+                    {
+                        record.UserName = user.UserName;
+                        record.Password = user.Password;
+                        record.FirstName = user.FirstName;
+                        record.LastName = user.LastName;
+                        record.Email = user.Email;
+                        record.PhoneNumber = user.PhoneNumber;
+                        record.UpdatedOn = user.UpdatedOn;
+                    }
+
+                    //update that post
+                    db.SecUsers.Update(record);
+
+                    //Commit the transaction
+                    await db.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception: ", ex.StackTrace);
+                }
+            }
+        }
 
     }
+    #endregion
 }
 

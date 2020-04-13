@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Globalization;
+using System.Collections;
 
 namespace CoreWebAPI.Controllers
 {
@@ -65,5 +67,158 @@ namespace CoreWebAPI.Controllers
         {
             return Ok(db.SecUsers.ToList());
         }
+
+
+        #region Added By Kashan
+
+        [AllowAnonymous]
+        [HttpPost("GetUsers")]
+        public async Task<IActionResult> GetUsers([FromBody]vmUser userParam)
+        {
+            List<vmUser> users = new List<vmUser>();
+            try
+            {
+                users = await _userService.GetUsers(userParam);
+                //if (users == null)
+                //{
+                //    return NotFound();
+                //}
+                return Ok(users);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("Some Error Acquired: ", ex.StackTrace);
+            }
+
+            return BadRequest();
+        }
+
+
+        [AllowAnonymous]
+        [HttpGet("GetUser")]
+        public async Task<IActionResult> GetUser(int? userId)
+        {
+            if (userId == null)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                var user = await _userService.GetUser(userId);
+
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                return Ok(user);
+            }
+            catch (Exception)
+            {
+                return BadRequest();
+            }
+        }
+
+        [HttpPost]
+        [Route("CreateUser")]
+        public async Task<IActionResult> CreateUser([FromBody]SecUsers model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    model.Channel = "website";
+
+                    //model.CreatedOn = DateTime.Now;
+                    model.CreatedOn = UsersController.ConvertStringToDate( DateTime.Now.ToString("dd/MM/yyyy"));
+
+                    var userId = await _userService.CreateUser(model);
+                    if (userId > 0)
+                    {
+                        return Ok(userId);
+                    }
+                    else
+                    {
+                        return NotFound();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Some Error AAcquired: " + ex.StackTrace);
+                    return BadRequest();
+                }
+            }
+
+            return BadRequest();
+        }
+
+        public static DateTime ConvertStringToDate(string date)
+        {
+            string[] dateParts = date.Split('/');
+            int day = Convert.ToInt32(dateParts[0]);
+            int month = Convert.ToInt32(dateParts[1]);
+            int year = Convert.ToInt32(dateParts[2]);
+
+            DateTime currentDate = new DateTime(year, month, day);
+           
+            return currentDate;
+        }
+
+        [HttpPost]
+        [Route("DeleteUser")]
+        public async Task<IActionResult> DeleteUser(int? userId)
+        {
+            int result = 0;
+
+            if (userId == null)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                result = await _userService.DeleteUser(userId);
+                if (result == 0)
+                {
+                    return NotFound();
+                }
+                return Ok();
+            }
+            catch (Exception)
+            {
+
+                return BadRequest();
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateUser")]
+        public async Task<IActionResult> UpdatePost([FromBody]SecUsers model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    model.UpdatedOn = UsersController.ConvertStringToDate(DateTime.Now.ToString("dd/MM/yyyy"));
+                    await _userService.UpdateUser(model);
+
+                    return Ok();
+                }
+                catch (Exception ex)
+                {
+                    if (ex.GetType().FullName == "Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException")
+                    {
+                        return NotFound();
+                    }
+
+                    return BadRequest();
+                }
+            }
+
+            return BadRequest();
+        }
     }
+
+    #endregion
 }

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace CoreWebAPI.Services
         List<SecPermissions> GetAllPermissions();
 
         #region Added By Kashan
-        Task<List<vmUser>> GetUsers(vmUser criteria);
+        Task<List<SecUsers>> GetUsers(vmUser criteria);
 
         Task<vmUser> GetUser(int? Id);
 
@@ -39,6 +40,7 @@ namespace CoreWebAPI.Services
     public class UserService : IUserService
     {
         CoreDBContext db = new CoreDBContext();
+        IQueryable<SecUsers> empDetailsVar;
 
         // users hardcoded for simplicity, store in a db with hashed passwords in production applications
         private List<vmUser> _users = new List<vmUser>();
@@ -119,26 +121,36 @@ namespace CoreWebAPI.Services
         #region Added by kashan
 
 
-        public async Task<List<vmUser>> GetUsers(vmUser criteria)
+        public async Task<List<SecUsers>> GetUsers(vmUser criteria)
         {
+            List<SecUsers> users = new List<SecUsers>();
+
+
             if (db != null)
             {
                 try
                 {
-                    return await (from p in db.SecUsers
-                                  where p.UserName == criteria.UserName
+                    Expression<Func<SecUsers, bool>> userName = res => res.UserName == criteria.UserName;
+                    Expression<Func<SecUsers, bool>> status = res => res.Status == criteria.Status;
+                    Expression<Func<SecUsers, bool>> createdBy = res => res.CreatedBy == criteria.CreatedBy;
+                    IQueryable<SecUsers> filter = db.SecUsers;
 
-                                  select new vmUser
-                                  {
-                                      Id = p.SecUserId,
-                                      UserName = p.UserName,
-                                      FirstName = p.FirstName,
-                                      LastName = p.LastName,
-                                      PhoneNumber = p.PhoneNumber,
-                                      Email = p.Email
-                                  }).ToListAsync();
 
-                  
+                    if (!String.IsNullOrEmpty(criteria.UserName) || criteria.UserName != null)
+                    {
+                        filter = filter.Where(userName);
+                    }
+                    if (criteria.Status != null || criteria.Status > -1)
+                    {
+                        filter = filter.Where(status);
+                    }
+                    if (criteria.CreatedBy != null || criteria.Status > -1)
+                    {
+                        filter = filter.Where(createdBy);
+                    }
+
+                    return await filter.ToListAsync();
+
 
                 }
                 catch (Exception ex) {

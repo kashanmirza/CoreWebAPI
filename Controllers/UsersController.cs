@@ -75,14 +75,14 @@ namespace CoreWebAPI.Controllers
         [HttpPost("GetUsers")]
         public async Task<IActionResult> GetUsers([FromBody]vmUser userParam)
         {
-            List<vmUser> users = new List<vmUser>();
+            List<SecUsers> users = new List<SecUsers>();
             try
             {
                 users = await _userService.GetUsers(userParam);
-                //if (users == null)
-                //{
-                //    return NotFound();
-                //}
+                if (users == null)
+                {
+                    return NotFound();
+                }
                 return Ok(users);
             }
             catch(Exception ex)

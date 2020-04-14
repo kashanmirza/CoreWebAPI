@@ -14,14 +14,9 @@ namespace CoreWebAPI.Helpers
             where TDest : class
         {
             var destProperties = destination.GetType().GetProperties();
-            //.Where(x => !x.CustomAttributes.Any() //y =>  y.AttributeType.Name == PropertyCopyIgnoreAttribute.Name)
-            //    &&
-            //x.CanRead && x.CanWrite && !x.GetGetMethod().IsVirtual);
 
             var sourceProperties = source.GetType().GetProperties();
-                //.Where(x => !x.CustomAttributes.Any(y => y.AttributeType.Name == PropertyCopyIgnoreAttribute.Name)
-                //&&
-                //x.CanRead && x.CanWrite && !x.GetGetMethod().IsVirtual);
+
             var copyProperties = sourceProperties.Join(destProperties, x => x.Name, y => y.Name, (x, y) => x);
             foreach (var sourceProperty in copyProperties)
             {

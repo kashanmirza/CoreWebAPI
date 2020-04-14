@@ -32,11 +32,6 @@ namespace CoreWebAPI.ViewModel
         public string IntialName { get; set; }
         public string RoleName { get; set; }
         public List<SecPermissions> permissions { get; set; }
-
-        public static implicit operator vmUser(List<vmUser> v)
-        {
-            throw new NotImplementedException();
-        }
     }
 
 }

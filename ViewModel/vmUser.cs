@@ -31,7 +31,7 @@ namespace CoreWebAPI.ViewModel
         public string LastName { get; set; }
         public string IntialName { get; set; }
         public string RoleName { get; set; }
-        public List<SecPermissions> permissions { get; set; }
+        public List<Permission> permissions { get; set; }
     }
 
 }

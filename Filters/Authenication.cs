@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using CoreWebAPI.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +13,9 @@ namespace CoreWebAPI.Filters
 {
     public class AuthenicationFilter : ActionFilterAttribute
     {
-      
+        CoreDBContext db = new CoreDBContext();
         public override void OnActionExecuting(ActionExecutingContext actionContext)
         {
-            //    var token = actionContext.Request.Headers.Where(x => x.Key == "token").Select(x => x.Value).FirstOrDefault();
             var token = actionContext.HttpContext.Request.Headers.Where(x => x.Key == "token").Select(x => x.Value).FirstOrDefault() ;
 
             if (token.Count() > 0)
@@ -30,35 +31,44 @@ namespace CoreWebAPI.Filters
                     }
                     else
                     {
-                        var responseMessage = new HttpResponseMessage(HttpStatusCode.Unauthorized) { ReasonPhrase = "Token is not Authorized" };
-                      //  actionContext.Response = responseMessage;
-                        base.OnActionExecuted(null);
+                        var responseMessage = new HttpResponseMessage(HttpStatusCode.Unauthorized) { ReasonPhrase = "Token is not Authorized OR Expired" };
+                        actionContext.Result = new BadRequestObjectResult(responseMessage);
+                        return;
                     }
                 }
                 catch (Exception ex)
                 {
-                   // Logger.getInstance().Error("Authentication", "Error", ex);
-                    throw;
+                    throw ex;
                 }
             }
             else
             {
                 var response = new HttpResponseMessage(HttpStatusCode.Unauthorized) { ReasonPhrase = "Token is not provided" };
-               // actionContext.Response = response;
+                actionContext.Result = new BadRequestObjectResult(response);
+                return;
             }
 
         }
         public bool ValidateToken(string tokenId)
         {
-            //objUser = new DAUser();
-            //DataTable table = objUser.isTokenExist(tokenId);
-            //if (table.Rows.Count > 0)
-            //{
-            //    //DateTime exPiry = objUser.GetTokenExpiry(tokenId);
-            //    string exPiry = Convert.ToInt32(ConfigurationManager.AppSettings["TokenExpiryExtenstion"].ToString()).ToString();
-            //    objUser.UpdateTokenExpiry(tokenId, exPiry.ToString());
-            //    return true;
-            //}
+
+            if (!String.IsNullOrEmpty(tokenId)) {
+                var user = db.SecUsers.Where(x => x.Token.Contains(tokenId)).FirstOrDefault();
+                if(user != null)
+                {
+
+                    if (user.TokenExpireOn >= DateTime.Now)
+                    {
+                        user.TokenExpireOn = DateTime.Now.AddMinutes(5);
+                        db.SecUsers.Update(user);
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
             return false;
         }
     }

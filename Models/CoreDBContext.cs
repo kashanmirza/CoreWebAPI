@@ -15,7 +15,7 @@ namespace CoreWebAPI.Models
         {
         }
 
-        public virtual DbSet<SecPermissions> SecPermissions { get; set; }
+        public virtual DbSet<Permission> SecPermissions { get; set; }
         public virtual DbSet<SecRolePermissions> SecRolePermissions { get; set; }
         public virtual DbSet<SecRolePermissionsInterim> SecRolePermissionsInterim { get; set; }
         public virtual DbSet<SecRoles> SecRoles { get; set; }
@@ -37,7 +37,7 @@ namespace CoreWebAPI.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<SecPermissions>(entity =>
+            modelBuilder.Entity<Permission>(entity =>
             {
                 entity.HasKey(e => e.SecPermissionId);
 

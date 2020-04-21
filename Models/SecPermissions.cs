@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CoreWebAPI.Models
 {
-    public partial class SecPermissions
+    public partial class Permission
     {
         public int SecPermissionId { get; set; }
         public string PermissionName { get; set; }
@@ -24,4 +24,6 @@ namespace CoreWebAPI.Models
         public DateTime? UpdatedOn { get; set; }
         public bool? IsActive { get; set; }
     }
+
+   
 }

@@ -10,6 +10,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Globalization;
 using System.Collections;
+using CoreWebAPI.Filters;
+using CoreWebAPI.Helpers;
 
 namespace CoreWebAPI.Controllers
 {
@@ -71,8 +73,8 @@ namespace CoreWebAPI.Controllers
 
         #region Added By Kashan
 
-        [AllowAnonymous]
-        [HttpPost("GetUsers")]
+       [AuthenicationFilter]
+       [HttpPost("GetUsers")]
         public async Task<IActionResult> GetUsers([FromBody]vmUser userParam)
         {
             List<SecUsers> users = new List<SecUsers>();
@@ -94,7 +96,7 @@ namespace CoreWebAPI.Controllers
         }
 
 
-        [AllowAnonymous]
+       
         [HttpGet("GetUser")]
         public async Task<IActionResult> GetUser(int? userId)
         {
@@ -120,8 +122,7 @@ namespace CoreWebAPI.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("CreateUser")]
+        [HttpPost("CreateUser")]
         public async Task<IActionResult> CreateUser([FromBody]SecUsers model)
         {
             if (ModelState.IsValid)
@@ -129,10 +130,8 @@ namespace CoreWebAPI.Controllers
                 try
                 {
                     model.Channel = "website";
-
-                    //model.CreatedOn = DateTime.Now;
-                    model.CreatedOn = UsersController.ConvertStringToDate( DateTime.Now.ToString("dd/MM/yyyy"));
-
+                    model.Status = 1;
+                    model.CreatedOn = DateFormatter.ConvertStringToDate( DateTime.Now.ToString("dd/MM/yyyy"));
                     var userId = await _userService.CreateUser(model);
                     if (userId > 0)
                     {
@@ -165,8 +164,8 @@ namespace CoreWebAPI.Controllers
             return currentDate;
         }
 
-        [HttpPost]
-        [Route("DeleteUser")]
+
+        [HttpPost("DeleteUser")]
         public async Task<IActionResult> DeleteUser(int? userId)
         {
             int result = 0;
@@ -192,9 +191,9 @@ namespace CoreWebAPI.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("UpdateUser")]
-        public async Task<IActionResult> UpdatePost([FromBody]SecUsers model)
+
+        [HttpPost("UpdateUser")]
+        public async Task<IActionResult> UpdateUser([FromBody]SecUsers model)
         {
             if (ModelState.IsValid)
             {
